@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>floppy · SQLi dashboard</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#131822; --panel-2:#1a2130; --line:#232c3d;
+    --text:#e6edf3; --muted:#8b97a7; --accent:#39d98a; --accent-2:#2bb3ff;
+    --warn:#ffcc66; --danger:#ff5d73; --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  :root:not([data-theme="dark"]) @media (prefers-color-scheme: light){}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;}
+  header{display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--bg));}
+  .logo{font-family:var(--mono);font-weight:700;font-size:20px;letter-spacing:.5px}
+  .logo .who{color:var(--accent-2)} .logo .flo{color:var(--accent)}
+  .tag{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+  main{max-width:1000px;margin:0 auto;padding:20px;display:grid;gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  input,select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    padding:10px 12px;border-radius:8px;font-family:var(--mono);font-size:13px}
+  .row{display:grid;grid-template-columns:1fr 160px 120px;gap:12px}
+  .checks{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+  .checks label{display:flex;align-items:center;gap:6px;margin:0;color:var(--text)}
+  .checks input{width:auto}
+  button{margin-top:16px;background:var(--accent);color:#06240f;border:0;padding:12px 18px;
+    border-radius:8px;font-weight:700;cursor:pointer;font-size:14px}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.stop{background:var(--danger);color:#2a0409}
+  .console{font-family:var(--mono);font-size:12px;line-height:1.6;background:#070a0f;border:1px solid var(--line);
+    border-radius:8px;padding:12px;height:220px;overflow:auto;white-space:pre-wrap}
+  .console .f{color:var(--danger);font-weight:700}
+  .console .ok{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td.payload{font-family:var(--mono);color:var(--warn);word-break:break-all}
+  .pill{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+  .empty{color:var(--muted);font-size:13px}
+  .note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+  footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span class="who">whoami</span> · <span class="flo">floppy</span></div>
+  <a class="tag" href="https://github.com/whoamix1010-glitch" target="_blank" rel="noopener"
+     style="text-decoration:none">★ github.com/whoamix1010-glitch</a>
+</header>
+<main>
+  <section class="card">
+    <h2>Target</h2>
+    <div class="row">
+      <div><label>URL (include parameters, e.g. ?id=1)</label>
+        <input id="url" placeholder="http://target/item?id=1"></div>
+      <div><label>Method</label>
+        <select id="method"><option>GET</option><option>POST</option></select></div>
+      <div><label>Delay (time-based, s)</label>
+        <input id="delay" type="number" value="5" min="1"></div>
+    </div>
+    <label>POST data (optional, e.g. id=1&name=x)</label>
+    <input id="data" placeholder="leave blank for GET">
+    <label>Cookie (optional)</label>
+    <input id="cookie" placeholder="PHPSESSID=...">
+    <div class="checks">
+      <label><input type="checkbox" class="tech" value="error" checked> error-based</label>
+      <label><input type="checkbox" class="tech" value="boolean" checked> boolean blind</label>
+      <label><input type="checkbox" class="tech" value="time" checked> time blind</label>
+    </div>
+    <button id="run">▶ Start scan</button>
+    <p class="note">Only scan systems you own or are explicitly authorized to test. Results may
+      include false positives — confirm manually before reporting.</p>
+  </section>
+
+  <section class="card">
+    <h2>Live log</h2>
+    <div id="console" class="console"><span class="ok">idle — enter a target and start a scan.</span></div>
+  </section>
+
+  <section class="card">
+    <h2>Findings</h2>
+    <table>
+      <thead><tr><th>Param</th><th>Loc</th><th>Technique</th><th>DBMS</th><th>Payload</th></tr></thead>
+      <tbody id="findings"><tr><td colspan="5" class="empty">No findings yet.</td></tr></tbody>
+    </table>
+  </section>
+</main>
+<footer>
+  floppy — built for authorized penetration testing<br>
+  created by <strong>whoami · floppy</strong> ·
+  <a href="https://github.com/whoamix1010-glitch" target="_blank" rel="noopener"
+     style="color:var(--accent-2)">github.com/whoamix1010-glitch</a>
+</footer>
+
+<script>
+const $ = s => document.querySelector(s);
+const consoleEl = $("#console"), findingsEl = $("#findings");
+let running = false, firstFinding = true;
+
+function log(msg, cls){
+  const span = document.createElement("span");
+  span.className = cls || "";
+  span.textContent = msg + "\n";
+  consoleEl.appendChild(span);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+function addFinding(f){
+  if(firstFinding){ findingsEl.innerHTML = ""; firstFinding = false; }
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${esc(f.param)}</td><td>${esc(f.location)}</td>
+    <td><span class="pill">${esc(f.technique)}</span></td><td>${esc(f.dbms)}</td>
+    <td class="payload">${esc(f.payload)}</td>`;
+  findingsEl.appendChild(tr);
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+$("#run").addEventListener("click", () => {
+  if(running) return;
+  const techs = [...document.querySelectorAll(".tech:checked")].map(c => c.value);
+  if(!$("#url").value.trim()){ log("[!] enter a target URL first", "f"); return; }
+  if(!techs.length){ log("[!] select at least one technique", "f"); return; }
+
+  consoleEl.innerHTML = ""; findingsEl.innerHTML =
+    '<tr><td colspan="5" class="empty">No findings yet.</td></tr>';
+  firstFinding = true; running = true;
+  $("#run").disabled = true; $("#run").textContent = "scanning…";
+
+  const body = {
+    url: $("#url").value.trim(), method: $("#method").value,
+    data: $("#data").value.trim(), cookie: $("#cookie").value.trim(),
+    delay: parseInt($("#delay").value) || 5, techniques: techs,
+  };
+  const es = new AbortController();
+  fetch("/api/scan", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify(body), signal: es.signal})
+    .then(r => { const reader = r.body.getReader(); const dec = new TextDecoder(); let buf="";
+      function pump(){ return reader.read().then(({done,value}) => {
+        if(done){ finish(); return; }
+        buf += dec.decode(value, {stream:true});
+        let lines = buf.split("\n"); buf = lines.pop();
+        for(const line of lines){ if(!line.trim()) continue;
+          const ev = JSON.parse(line);
+          if(ev.finding){ addFinding(ev.finding); log("[+] "+ev.finding.technique+" on "+ev.finding.param+"  → "+ev.finding.evidence, "f"); }
+          else if(ev.log){ log("    "+ev.log, "ok"); }
+          else if(ev.done){ log("[=] scan complete", "ok"); }
+          else if(ev.error){ log("[!] "+ev.error, "f"); }
+        }
+        return pump();
+      });}
+      return pump();
+    })
+    .catch(e => log("[!] "+e.message, "f"))
+    .finally(finish);
+
+  function finish(){ running = false; $("#run").disabled = false; $("#run").textContent = "▶ Start scan"; }
+});
+</script>
+</body>
+</html>
