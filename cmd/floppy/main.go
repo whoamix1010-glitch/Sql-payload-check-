@@ -31,7 +31,7 @@ const banner = `
 
 func main() {
 	if len(os.Args) < 2 {
-		runDashboard([]string{}) // no args → dashboard
+		runInteractive() // no args → interactive menu
 		return
 	}
 	switch os.Args[1] {
@@ -54,8 +54,8 @@ func usage() {
 	fmt.Print(banner)
 	fmt.Print(`
 Usage:
-  floppy                 launch the dashboard (default)
-  floppy dash [--addr]   launch the dashboard explicitly
+  floppy                 interactive menu (default): enter URL, pick a check
+  floppy dash [--addr]   launch the browser dashboard
   floppy scan  -u URL    run a scan from the command line
   floppy version
 
