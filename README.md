@@ -42,20 +42,37 @@ make build        # -> ./bin/floppy
 
 ## Usage
 
-### Dashboard (default)
+### Interactive menu (default)
 
 ```bash
 floppy
 ```
 
-Launches the **whoami · floppy** dashboard at `http://127.0.0.1:8777` and opens your
-browser. Enter a target URL, pick which injection types to run (error-based, boolean
-blind, time blind), and watch findings stream in live.
+Runs the interactive menu and **stays on screen**. It asks for the target URL first,
+then shows a numbered menu of which check to run:
+
+```
+  Which check do you want to run?
+    1) Normal / basic payloads   (error-based quick check)
+    2) Boolean-based blind       (TRUE vs FALSE response)
+    3) Time-based blind          (SLEEP / delay payloads)
+    4) Full scan                 (all techniques)
+    5) Change target URL
+    0) Exit
+```
+
+Pick a number, see the results, and you're returned to the menu to run another check.
+
+### Dashboard (browser UI)
 
 ```bash
+floppy dash                         # http://127.0.0.1:8777, opens your browser
 floppy dash --addr 127.0.0.1:9000   # custom bind address
 floppy dash --no-open               # don't auto-open the browser (headless box)
 ```
+
+The **whoami · floppy** dashboard lets you enter a target, tick which injection types to
+run, and watch findings stream in live.
 
 ### CLI
 
